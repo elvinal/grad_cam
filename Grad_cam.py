@@ -22,7 +22,7 @@ IMAGENET_MEAN = [104.00698793, 116.66876762, 122.67891434]
 Image_Norm = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 tmp_dir = '/home/hyy/grad_cam/tmp'
 wpath = '/home/hyy/MIT67-vgg16-places365-fc-SGD0.004_epoch19_0.8187.ckpt'
-
+tf.enable_egaer_execution()
 def get_im_list(im_dir, dest_dir, file_path):
     im_list = []
     im_labels = []

@@ -56,44 +56,45 @@ def visual_saliency():
         os.makedirs(destdir)
     train_file = '/home/0_public_data/MIT67/TrainImages.label'
     train_list, train_labels, train_dpath = get_im_list(imdir, destdir, train_file)
-    x = tf.placeholder()
-    impath = train_list[19]
-    im = cv2.imread(impath)
-    im = cv2.resize(im, dsize=(224, 224))
-    mean_im = np.tile(IMAGENET_MEAN, [224, 224, 1])
-    x = im - mean_im
-    nclass = 67
-    model = standardmodel.VGG16(nclass)
-    # model = DenseNet.DenseNet161(nclass)
-    cate_id = tf.placeholder(tf.int32)
-    tfcam, logits = grad_cam(model, x[None, :, :, :], cate_id, "conv5_3", nclass)
-    score = tf.nn.softmax(logits)
-    # Configuration of GPU usage
-    config = tf.ConfigProto()
-    # config.gpu_options.per_process_gpu_memory_fraction = 0.7
-    config.gpu_options.allow_growth = True
+    for i in range(0, train_list.__len__()):
+        impath = train_list[i]
+        im = cv2.imread(impath)
+        im = cv2.resize(im, dsize=(224, 224))
+        mean_im = np.tile(IMAGENET_MEAN, [224, 224, 1])
+        x = im - mean_im
+        nclass = 67
+        model = standardmodel.VGG16(nclass)
+        # model = DenseNet.DenseNet161(nclass)
+        cate_id = tf.placeholder(tf.int32)
+        tfcam, logits = grad_cam(model, x[None, :, :, :], cate_id, "conv5_3", nclass)
+        score = tf.nn.softmax(logits)
+        # Configuration of GPU usage
+        config = tf.ConfigProto()
+        # config.gpu_options.per_process_gpu_memory_fraction = 0.7
+        config.gpu_options.allow_growth = True
 
-    with tf.Session(config=config) as sess:
-        model.init_from_ckpt(wpath)
-        # Initialize all variables
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer())
+        with tf.Session(config=config) as sess:
+            if(i<=0):
+                model.init_from_ckpt(wpath)
+            # Initialize all variables
+            sess.run(tf.global_variables_initializer())
+            sess.run(tf.local_variables_initializer())
 
-        #model.load_initial_weights(sess, wpath)
-        sco = sess.run(score)
-        print(_sdict[np.argmax(sco)], np.max(sco))
-        cid = np.argmax(sco)
+            #model.load_initial_weights(sess, wpath)
+            sco = sess.run(score)
+            print(_sdict[np.argmax(sco)], np.max(sco))
+            cid = np.argmax(sco)
 
-        ocam = sess.run(tfcam, feed_dict={cate_id: cid})
-        ocam = np.maximum(ocam, 0)
-        ocam = cv2.resize(ocam, (224, 224))
-        if np.mean(ocam) == 0:
-            print(_sdict[cid])
-        heatmap = ocam / np.max(ocam)
-        gcam = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
-        gcam = np.float32(gcam) + np.float32(im)
-        gcam = np.uint8(255 * gcam / np.max(gcam))
-        cv2.imwrite(train_dpath[19].format(_sdict[cid]), gcam)
+            ocam = sess.run(tfcam, feed_dict={cate_id: cid})
+            ocam = np.maximum(ocam, 0)
+            ocam = cv2.resize(ocam, (224, 224))
+            if np.mean(ocam) == 0:
+                print(_sdict[cid])
+            heatmap = ocam / np.max(ocam)
+            gcam = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
+            gcam = np.float32(gcam) + np.float32(im)
+            gcam = np.uint8(255 * gcam / np.max(gcam))
+            cv2.imwrite(train_dpath[i].format(_sdict[cid]), gcam)
 
 
 
